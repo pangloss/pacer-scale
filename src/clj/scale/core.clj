@@ -46,21 +46,6 @@
           (when (< idx last-idx)
             (recur (inc idx) vs)))))))
 
-(set-test generate-scale
-  (let [vertices (atom [])
-        edges (atom {})
-        reset #(do (swap! vertices empty) (swap! edges empty))]
-    (with-redefs [scale-vertex (fn [g scale i]
-                                 (swap! vertices conj i)
-                                 i)
-                  scale-edge (fn [g from to dist]
-                               (swap! edges update dist (fnil conj []) [from to]))]
-      (do (reset) (generate-scale nil 0 10 1)
-          (is (= (range 0 11) @vertices))
-          (is (= {1 [[0 1] [1 2] [2 3] [3 4] [4 5] [5 6] [6 7] [7 8] [8 9] [9 10]]
-                  10 [[0 10]]}
-                 @edges))))))
-
 (defn value [^Vertex point]
   (.getProperty point "value"))
 
@@ -271,5 +256,4 @@
     (test #'max-value)
     (test #'scale-index)
     (test #'next-step)
-    (test #'scale-point)
-    (test #'generate-scale)))
+    (test #'scale-point)))
