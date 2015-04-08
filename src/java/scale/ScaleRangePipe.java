@@ -13,10 +13,10 @@ import java.util.Iterator;
 
 public class ScaleRangePipe extends AbstractPipe<Vertex, Vertex> {
     private static final IFn require = Clojure.var("clojure.core", "require");
-    private static final IFn scaleRange = Clojure.var("scale.core", "scale-range");
+    private static final IFn scaleRange = Clojure.var("xn.graph.scale.core", "scale-range");
 
     static {
-        require.invoke(Clojure.read("scale.core"));
+        require.invoke(Clojure.read("xn.graph.scale.core"));
     }
 
     protected Iterator<Vertex> nextEnds;

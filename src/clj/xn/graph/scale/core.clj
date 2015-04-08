@@ -1,4 +1,4 @@
-(ns scale.core
+(ns xn.graph.scale.core
   (:require [clojure.test :refer [is testing set-test]])
   (:import (com.tinkerpop.blueprints Graph Direction Edge Element Vertex)
            java.math.BigDecimal

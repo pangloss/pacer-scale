@@ -15,8 +15,8 @@ module Scale
 
   class << self
     def generate_scale(label, min, max, step)
-      Clojure.var('clojure.core', 'require').invoke('scale.core')
-      gs = Clojure.var('scale.core', 'generate-scale')
+      Clojure.var('clojure.core', 'require').invoke('xn.graph.scale.core')
+      gs = Clojure.var('xn.graph.scale.core', 'generate-scale')
       v = gs.invoke(graph.blueprints_graph, min.to_i, max.to_i, BigDecimal.new(step.to_s))
       nil
     end

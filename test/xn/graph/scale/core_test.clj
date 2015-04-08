@@ -1,5 +1,5 @@
-(ns scale.core-test
-  (:use scale.core
+(ns xn.graph.scale.core-test
+  (:use xn.graph.scale.core
         criterium.core)
   (import java.math.BigDecimal)
   (:require [clojure.test :refer [deftest is]]
