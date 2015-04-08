@@ -25,7 +25,7 @@ module Scale
 
   module ScaleValue
     module Route
-      attr_accessor :label, :min, :max, :step, :offset, :above_tolerance, :below_tolerance
+      attr_accessor :min, :max, :step, :offset, :above_tolerance, :below_tolerance
 
       def range(offset, tolerance)
         @offset = offset
@@ -55,7 +55,7 @@ module Scale
       end
 
       def attach_pipe(end_pipe)
-        pipe = ScaleRangePipe.new(label, min, max, bigdec(step), bigdec(offset), bigdec(below_tolerance), bigdec(above_tolerance))
+        pipe = ScaleRangePipe.new(min, max, bigdec(step), bigdec(offset), bigdec(below_tolerance), bigdec(above_tolerance))
         pipe.set_starts end_pipe if end_pipe
         pipe
       end

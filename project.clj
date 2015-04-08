@@ -11,6 +11,7 @@
   {:dev {:dependencies [[org.clojure/test.check "0.7.0"]
                         [criterium "0.4.3"]]}}
   :source-paths      ["src/clj" "dev"]
+  :java-source-paths ["src/java"]
   ; lein test-refresh : rerun tests when files change
   :global-vars {*warn-on-reflection* true}
   :plugins [[com.jakemccrary/lein-test-refresh "0.5.2"]])
