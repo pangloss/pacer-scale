@@ -1,4 +1,4 @@
-package com.javaco.merlin;
+package xn.graph.scale;
 
 import clojure.java.api.Clojure;
 import clojure.lang.IFn;

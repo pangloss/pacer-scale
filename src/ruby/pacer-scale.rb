@@ -1,17 +1,20 @@
+require 'pacer-scale/version'
+require 'xn_graph_scale.jar'
 
 module Pacer
   module Routes
     module RouteOperations
       #g.v(SomeUnit).as_scale(label: 'next_mass', min: 100, max: 1500, step: 0.005)
       def as_scale(opts = {})
-        chain_route(opts.merge(transform: ScaleValue::Route))
+        chain_route(opts.merge(filter: ScaleValue::Route))
       end
     end
   end
 end
 
-module Scale
+module PacerScale
   import java.math.BigDecimal
+  import xn.graph.scale.ScaleRangePipe
 
   class << self
     def generate_scale(label, min, max, step)
