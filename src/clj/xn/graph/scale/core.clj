@@ -5,7 +5,7 @@
            java.math.MathContext
            java.util.Iterator))
 
-(def distances (into [] (take 5) (iterate #(* 10 %) 1)))
+(def distances (into [] (take 10) (iterate #(* 10 %) 1)))
 (def max-step (apply max distances))
 
 (defmacro inspect [n]
@@ -238,10 +238,14 @@
     (is (= [-1 10] (traversal-steps 1 10)))
     (is (= [-1 10 1] (traversal-steps 1 11)))
     (is (= [1 1] (traversal-steps 9 11)))
+    (is (= [1 -10 100 -1000 10000 -100000 1000000 -10000000 100000 -10000 1000 -100 10 -1]
+           (traversal-steps 9090909 90909)))
     (is (= [1 1 1 1 1 10 10 10 10 100 100 100 10 10 10 10 10 1 1 1 1 1]
            (traversal-steps 55 455)))
     (is (= [1 1 1 1 1 10 10 10 10 100 100 100 100 -10 -10 -1 -1 -1 -1 -1]
            (traversal-steps 55 475)))
+    (is (= [1 1 1 1 1 10 10 10 10 10 -100 -10 -10 1 1 1]
+           (traversal-steps 145 83)))
     (is (= [1 1 1 1 1 10 10 10 10 10 -100 -10 -10 1 1 1]
            (traversal-steps 45 -17)))))
 
