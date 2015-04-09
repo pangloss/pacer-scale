@@ -1,7 +1,9 @@
 (ns xn.graph.scale.core-test
   (:use xn.graph.scale.core
         criterium.core)
-  (import java.math.BigDecimal)
+  (import java.math.BigDecimal
+          (com.tinkerpop.blueprints Graph Direction Edge Element Vertex)
+          com.tinkerpop.blueprints.impls.tg.TinkerGraph)
   (:require [clojure.test :refer [deftest is]]
             [clojure.test.check.clojure-test :refer [defspec]]
             [clojure.test.check :as tc]
@@ -91,6 +93,33 @@
                  (persistent! @edges))))))))
 
 
+
+(let [g (TinkerGraph.)
+      v0 (generate-scale g -500 500 0.1M)
+      label (into-array String ["next_1"])
+      actual (loop [actual {} v v0]
+               (if v
+                 (recur (assoc actual (value v) v) (first (.getVertices v Direction/OUT label)))
+                 actual))]
+  (defspec
+    navagate-a-real-scale
+    1000
+    (prop/for-all
+      [[start offset tolerance] (->> (gen/tuple gen/int gen/int gen/ratio)
+                                     (gen/fmap
+                                       (fn [[s o t]]
+                                         (if (neg? t) [s o (- t)] [s o t])))
+                                     (gen/such-that
+                                       (fn [[s o t]]
+                                         (and (<= -500 s 500)
+                                              (<= -500 (+ s o (- t)) (+ s o t) 500)))))]
+      (let [start (BigDecimal. (str start))
+            s (actual start)
+            expected (actual (+ start offset))
+            tolerance (BigDecimal. (str (double tolerance)))
+            f (scale-range -500 500 0.1M (BigDecimal. (str offset)) tolerance tolerance)
+            r (f s)]
+        (is (some #{expected} r))))))
 
 
 (deftest inline-tests
