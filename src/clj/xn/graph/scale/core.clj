@@ -31,20 +31,21 @@
 (defn generate-scale [g min max step]
   (let [scale {:min min :max max :step step}
         dists [1 10 100 1000 10000 100000 1000000]
-        v (scale-vertex g scale 0)
         last-idx (scale-index scale max)]
     (when last-idx
-      (loop [idx 1 vs (transient (zipmap dists (repeat v)))]
-        (let [v (scale-vertex g scale idx)
-              vs (reduce (fn [vs dist]
-                           (if (zero? (mod idx dist))
-                             (do (scale-edge g (vs dist) v dist)
-                                 (assoc! vs dist v))
-                             vs))
-                         vs
-                         dists)]
-          (when (< idx last-idx)
-            (recur (inc idx) vs)))))))
+      (let [v0 (scale-vertex g scale 0)]
+        (loop [idx 1 vs (transient (zipmap dists (repeat v0)))]
+          (let [v (scale-vertex g scale idx)
+                vs (reduce (fn [vs dist]
+                             (if (zero? (mod idx dist))
+                               (do (scale-edge g (vs dist) v dist)
+                                   (assoc! vs dist v))
+                               vs))
+                           vs
+                           dists)]
+            (if (< idx last-idx)
+              (recur (inc idx) vs)
+              v0)))))))
 
 (defn value [^Vertex point]
   (.getProperty point "value"))
@@ -69,12 +70,12 @@
 
 (defmacro inspect [n]
   `(let [n# ~n]
-     (prn '~n :=> n#)
+     (prn '~n '~'=> n#)
      n#))
 
 (defn ^long next-step [^long current ^long target ^long step]
   (let [step-mult (long 10)
-        max-step (long 100000)
+        max-step (long 1000000)
         step (long step)]
     (if (< (/ (double (Math/abs (- target current))) (double step)) 0.6666)
       (if (< current target)
@@ -107,7 +108,7 @@
 
 (defmulti ^:private traversal-step (fn [point n] n))
 
-(defn- *traversal-step [^Vertex point edge-dir ^String edge-label vertex-dir]
+(defn- *traversal-step [^Vertex point edge-dir edge-label vertex-dir]
   (let [^Iterator edges (.getEdges point edge-dir edge-label)
         ^Edge edge (when (.hasNext edges) (.next edges))]
     (.getVertex edge vertex-dir)))
@@ -132,6 +133,14 @@
   (*traversal-step point Direction/OUT "next_10000" Direction/IN))
 (defmethod traversal-step -10000 [^Vertex point n]
   (*traversal-step point Direction/IN "next_10000" Direction/OUT))
+(defmethod traversal-step 100000 [^Vertex point n]
+  (*traversal-step point Direction/OUT "next_100000" Direction/IN))
+(defmethod traversal-step -100000 [^Vertex point n]
+  (*traversal-step point Direction/IN "next_100000" Direction/OUT))
+(defmethod traversal-step 1000000 [^Vertex point n]
+  (*traversal-step point Direction/OUT "next_1000000" Direction/IN))
+(defmethod traversal-step -1000000 [^Vertex point n]
+  (*traversal-step point Direction/IN "next_1000000" Direction/OUT))
 
 ; FIXME: first If the first point is off the scale but the desired range includes the scale, it should adjust.
 (defn- first-point
@@ -256,4 +265,5 @@
     (test #'max-value)
     (test #'scale-index)
     (test #'next-step)
-    (test #'scale-point)))
+    (test #'scale-point)
+    (test #'traversal-steps)))
