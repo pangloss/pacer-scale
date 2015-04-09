@@ -10,7 +10,7 @@ module Pacer
     module RouteOperations
       #g.v(SomeUnit).as_scale(label: 'next_mass', min: 100, max: 1500, step: 0.005)
       def as_scale(opts = {})
-        chain_route(opts.merge(filter: ScaleValue::Route))
+        chain_route(opts.merge(filter: PacerScale::ScaleValue::Route))
       end
     end
   end
@@ -18,21 +18,38 @@ end
 
 module PacerScale
   import java.math.BigDecimal
+  import Java::clojure.java.api.Clojure
   import Java::xn.graph.scale.ScaleRangePipe
 
   class << self
-    def generate_scale(label, min, max, step)
-      Clojure.var('clojure.core', 'require').invoke('xn.graph.scale.core')
+    def generate_scale(graph, min, max, step)
+      Clojure.var('clojure.core', 'require').invoke(['xn.graph.scale.core'])
       gs = Clojure.var('xn.graph.scale.core', 'generate-scale')
-      v = gs.invoke(graph.blueprints_graph, min.to_i, max.to_i, BigDecimal.new(step.to_s))
-      nil
+      gs.invoke(graph.blueprints_graph, min.to_i, max.to_i, BigDecimal.new(step.to_s))
     end
   end
 
+  module ScaleRoot
+    module Vertex
+      def generate_scale(label, min, max, step)
+      end
+    end
+
+    module Route
+
+    end
+  end
 
   module ScaleValue
     module Route
       attr_accessor :min, :max, :step, :offset, :above_tolerance, :below_tolerance
+
+      def find(value, tolerance)
+        # calculate offset ...
+      end
+
+      def root
+      end
 
       def range(offset, tolerance)
         @offset = offset
@@ -61,8 +78,11 @@ module PacerScale
         BigDecimal.new(n.to_s) if n
       end
 
+      # TODO: inspect better
+
       def attach_pipe(end_pipe)
-        pipe = ScaleRangePipe.new(min, max, bigdec(step), bigdec(offset), bigdec(below_tolerance), bigdec(above_tolerance))
+        #pipe = ScaleRangePipe.new(min, max, bigdec(step), bigdec(offset), bigdec(below_tolerance), bigdec(above_tolerance))
+        pipe = com.tinkerpop.pipes.IdentityPipe.new
         pipe.set_starts end_pipe if end_pipe
         pipe
       end
