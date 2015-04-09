@@ -1,4 +1,8 @@
 require 'pacer-scale/version'
+require 'pacer'
+require 'lock_jar'
+LockJar.lock File.join(File.dirname(__FILE__), '../../Jarfile'), lockfile: 'Jarfile.pacer-mcfly.lock'
+LockJar.load 'Jarfile.pacer-mcfly.lock'
 require 'xn_graph_scale.jar'
 
 module Pacer
@@ -14,7 +18,7 @@ end
 
 module PacerScale
   import java.math.BigDecimal
-  import xn.graph.scale.ScaleRangePipe
+  import Java::xn.graph.scale.ScaleRangePipe
 
   class << self
     def generate_scale(label, min, max, step)

@@ -1,0 +1,6 @@
+repository "https://repo1.maven.org/maven2/"
+repository "https://clojars.org/repo/"
+jar "org.clojure:clojure:1.7.0-alpha6"
+jar "com.tinkerpop.blueprints:blueprints-core:2.6.0"
+jar "com.tinkerpop:pipes:2.6.0"
+jar "com.tinkerpop.gremlin:gremlin-java:2.6.0"

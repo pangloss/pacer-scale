@@ -1,6 +1,8 @@
 require 'bundler'
 Bundler::GemHelper.install_tasks
 
+require 'xn_gem_release_tasks'
+
 def target_jar
   "src/ruby/xn_graph_scale.jar"
 end
@@ -27,7 +29,7 @@ end
 file target_jar => FileList['project.clj', 'src/clojure/**/*.clj', 'src/java/**/*.java'] do
   Rake::Task['install_lein'].invoke
   sh "lein do clean, with-profile compiled jar"
-  build_jar = "target/mcfly-#{PacerScale::VERSION}.jar"
+  build_jar = "target/graph.scale-#{PacerScale::VERSION}.jar"
   FileUtils.cp build_jar, target_jar
 end
 
@@ -36,9 +38,6 @@ file 'Jarfile' => 'pom.xml' do
   require 'nokogiri'
   xml = Nokogiri::XML(File.read('pom.xml'))
   deps = xml.first_element_child.children.at('dependencies').element_children
-  deps = deps.reject do |dep|
-    dep.at('groupId').text == 'com.datomic'
-  end
   deps = deps.map do |dep|
     "#{dep.at('groupId').text}:#{dep.at('artifactId').text}:#{dep.at('version').text}"
   end
@@ -53,7 +52,6 @@ file 'Jarfile' => 'pom.xml' do
     deps.each do |dep|
       f.puts "jar \"#{dep}\""
     end
-    f.puts "exclude 'slf4j-nop'"
   end
 end
 
