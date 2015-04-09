@@ -16,6 +16,12 @@
                 (= (- to from)
                    (apply + (traversal-steps from to)))))
 
+(defn big-traversal [from to multiplier]
+  (let [from (* from (inc multiplier) (inc multiplier))
+        to   (* to   (inc multiplier) (inc multiplier))
+        steps (traversal-steps from to)]
+    (= (- to from)
+       (apply + steps))))
 
 (defspec
   bigger-steps-add-up-to-traversal-distance
@@ -23,10 +29,7 @@
   (prop/for-all [from gen/pos-int
                  to gen/pos-int
                  multiplier gen/pos-int]
-                (let [from (* from (inc multiplier))
-                      to (* to (inc multiplier))]
-                  (= (- to from)
-                     (apply + (traversal-steps from to))))))
+                (big-traversal from to multiplier)))
 
 (def gen-decimal
   (->> gen/ratio
@@ -48,7 +51,7 @@
         (assoc m d data)
         m))
     {}
-    [1 10 100 1000 10000 100000 1000000]))
+    distances))
 
 (defspec
   generate-various-scales

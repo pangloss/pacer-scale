@@ -5,6 +5,14 @@
            java.math.MathContext
            java.util.Iterator))
 
+(def distances (into [] (take 5) (iterate #(* 10 %) 1)))
+(def max-step (apply max distances))
+
+(defmacro inspect [n]
+  `(let [n# ~n]
+     (prn '~n '~'=> n#)
+     n#))
+
 (defn- within [scale n]
   (when (and n (<= (:min scale) n (:max scale)))
     n))
@@ -21,7 +29,8 @@
 
 (defn scale-vertex [^Graph g scale i]
   (let [v (.addVertex g nil)]
-    (.setProperty ^Vertex v "value" (scale-point scale i))))
+    (.setProperty ^Vertex v "value" (scale-point scale i))
+    v))
 
 (defn scale-edge [^Graph g ^Vertex from ^Vertex to dist]
   (.addEdge g nil from to (str "next_" dist)))
@@ -30,11 +39,10 @@
 
 (defn generate-scale [g min max step]
   (let [scale {:min min :max max :step step}
-        dists [1 10 100 1000 10000 100000 1000000]
         last-idx (scale-index scale max)]
     (when last-idx
       (let [v0 (scale-vertex g scale 0)]
-        (loop [idx 1 vs (transient (zipmap dists (repeat v0)))]
+        (loop [idx 1 vs (transient (zipmap distances (repeat v0)))]
           (let [v (scale-vertex g scale idx)
                 vs (reduce (fn [vs dist]
                              (if (zero? (mod idx dist))
@@ -42,7 +50,7 @@
                                    (assoc! vs dist v))
                                vs))
                            vs
-                           dists)]
+                           distances)]
             (if (< idx last-idx)
               (recur (inc idx) vs)
               v0)))))))
@@ -68,14 +76,9 @@
              (- (:below scale)))]
     (within scale (round-up scale n))))
 
-(defmacro inspect [n]
-  `(let [n# ~n]
-     (prn '~n '~'=> n#)
-     n#))
-
 (defn ^long next-step [^long current ^long target ^long step]
   (let [step-mult (long 10)
-        max-step (long 1000000)
+        max-step (long max-step)
         step (long step)]
     (if (< (/ (double (Math/abs (- target current))) (double step)) 0.6666)
       (if (< current target)
@@ -99,7 +102,7 @@
 
 (defn traversal-steps [current target]
   (loop [steps (transient []) current (long current)]
-    (if (or (= current target) (< 1000 (count steps)))
+    (if (or (= current target) (< 2000 (count steps)))
       (persistent! steps)
       (let [^long step (next-step (long current) (long target) (long 10))]
         (+ current step)
@@ -109,38 +112,16 @@
 (defmulti ^:private traversal-step (fn [point n] n))
 
 (defn- *traversal-step [^Vertex point edge-dir edge-label vertex-dir]
-  (let [^Iterator edges (.getEdges point edge-dir edge-label)
-        ^Edge edge (when (.hasNext edges) (.next edges))]
+  (let [edges (.getEdges point edge-dir edge-label)
+        ^Edge edge (when (seq edges) (first edges))]
     (.getVertex edge vertex-dir)))
 
-(defmethod traversal-step 1 [^Vertex point n]
-  (*traversal-step point Direction/OUT "next_1" Direction/IN))
-(defmethod traversal-step -1 [^Vertex point n]
-  (*traversal-step point Direction/IN "next_1" Direction/OUT))
-(defmethod traversal-step 10 [^Vertex point n]
-  (*traversal-step point Direction/OUT "next_10" Direction/IN))
-(defmethod traversal-step -10 [^Vertex point n]
-  (*traversal-step point Direction/IN "next_10" Direction/OUT))
-(defmethod traversal-step 100 [^Vertex point n]
-  (*traversal-step point Direction/OUT "next_100" Direction/IN))
-(defmethod traversal-step -100 [^Vertex point n]
-  (*traversal-step point Direction/IN "next_100" Direction/OUT))
-(defmethod traversal-step 1000 [^Vertex point n]
-  (*traversal-step point Direction/OUT "next_1000" Direction/IN))
-(defmethod traversal-step -1000 [^Vertex point n]
-  (*traversal-step point Direction/IN "next_1000" Direction/OUT))
-(defmethod traversal-step 10000 [^Vertex point n]
-  (*traversal-step point Direction/OUT "next_10000" Direction/IN))
-(defmethod traversal-step -10000 [^Vertex point n]
-  (*traversal-step point Direction/IN "next_10000" Direction/OUT))
-(defmethod traversal-step 100000 [^Vertex point n]
-  (*traversal-step point Direction/OUT "next_100000" Direction/IN))
-(defmethod traversal-step -100000 [^Vertex point n]
-  (*traversal-step point Direction/IN "next_100000" Direction/OUT))
-(defmethod traversal-step 1000000 [^Vertex point n]
-  (*traversal-step point Direction/OUT "next_1000000" Direction/IN))
-(defmethod traversal-step -1000000 [^Vertex point n]
-  (*traversal-step point Direction/IN "next_1000000" Direction/OUT))
+(doseq [dist distances]
+  (let [label (into-array String [(str "next_" dist)])]
+    (defmethod traversal-step dist [^Vertex point n]
+      (*traversal-step point Direction/OUT label Direction/IN))
+    (defmethod traversal-step (- dist) [^Vertex point n]
+      (*traversal-step point Direction/IN label Direction/OUT))))
 
 ; FIXME: first If the first point is off the scale but the desired range includes the scale, it should adjust.
 (defn- first-point
@@ -154,8 +135,9 @@
               (traversal-steps current target)))))
 
 (defn- next-point [scale max-value]
-  (fn [point]
-    (*traversal-step point Direction/OUT "next_1" Direction/IN)))
+  (let [label (into-array String ["next_1"])]
+    (fn [point]
+      (*traversal-step point Direction/OUT label Direction/IN))))
 
 (defn scale-range
   ([scale offset below above]
@@ -202,6 +184,7 @@
   (with-redefs [value identity]
     (let [s {:min 0 :max 8 :step 0.2M
              :offset 3.5M :below 1M :above 1M}]
+      (is (= 0M (min-value {:min 0 :max 8 :step 0.2M :offset 0M :below 0M :above 0M} 0)))
       (is (= 3.6M (min-value s 1)))
       (is (= 7.6M (min-value s 5)))
       (is (nil? (min-value (assoc s :below 6M) 2)))
