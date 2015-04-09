@@ -62,7 +62,10 @@
   (- n (mod n (:step scale))))
 
 (defn- round-up [scale n]
-  (+ n (- (:step scale) (mod (+ n) (:step scale)))))
+  (let [m (mod n (:step scale))]
+    (if (zero? m)
+      (BigDecimal. (str n))
+      (+ n (- (:step scale) (mod n (:step scale)))))))
 
 (defn- max-value [scale point]
   (let [n (+ (value point)
@@ -149,7 +152,8 @@
      (fn [point]
        (->> (first-point scale point)
             (iterate (next-point scale (max-value scale point)))
-            (take-while some?)))))
+            (take-while some?)
+            (take (inc (Math/round (/ (double (+ above below)) (double (:step scale))))))))))
   ([min max step offset below above]
    (scale-range {:min min :max max :step step}
                 offset below above)))
@@ -241,6 +245,18 @@
     (is (= [1 1 1 1 1 10 10 10 10 10 -100 -10 -10 1 1 1]
            (traversal-steps 45 -17)))))
 
+(set-test round-down
+  (do
+    (is (= 0.1M (round-down {:step 0.002M} 0.1019M)))
+    (is (= 1M (round-down {:step 0.002M} 1.0001M)))
+    (is (= 1M (round-down {:step 0.002M} 1)))))
+
+(set-test round-up
+  (do
+    (is (= 0.002M (round-up {:step 0.002M} 0.0001M)))
+    (is (= 1M (round-up {:step 0.002M} 1)))
+    (is (= 0M (round-up {:step 0.002M} 0)))))
+
 (def tests)
 (set-test tests
   (testing "tests defined in scale.core itself"
@@ -249,4 +265,6 @@
     (test #'scale-index)
     (test #'next-step)
     (test #'scale-point)
-    (test #'traversal-steps)))
+    (test #'traversal-steps)
+    (test #'round-up)
+    (test #'round-down)))
