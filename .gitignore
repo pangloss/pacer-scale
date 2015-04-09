@@ -6,3 +6,5 @@
 /.lein-*
 /.nrepl-port
 .*.un~
+Jarfile.lock
+Gemfile.lock
