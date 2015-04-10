@@ -3,7 +3,8 @@
         criterium.core)
   (import java.math.BigDecimal
           (com.tinkerpop.blueprints Graph Direction Edge Element Vertex)
-          com.tinkerpop.blueprints.impls.tg.TinkerGraph)
+          com.tinkerpop.blueprints.impls.tg.TinkerGraph
+          xn.graph.scale.ScaleRangePipe)
   (:require [clojure.test :refer [deftest is]]
             [clojure.test.check.clojure-test :refer [defspec]]
             [clojure.test.check :as tc]
@@ -119,7 +120,17 @@
             tolerance (BigDecimal. (str (double tolerance)))
             f (scale-range -500 500 0.1M (BigDecimal. (str offset)) tolerance tolerance)
             r (f s)]
-        (is (some #{expected} r))))))
+        (is (some #{expected} r)))))
+
+  (deftest test-range-pipe
+    (let [pipe (ScaleRangePipe. -500 500 0.1M 550M 1M 5M)
+          a (java.util.ArrayList.)]
+      (.add a v0)
+      (.setStarts pipe a)
+      (is (= (into [] (map actual) (range 49M 55.01M 0.1M))
+             (into [] (seq pipe))))))
+
+  )
 
 
 (deftest inline-tests
