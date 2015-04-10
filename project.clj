@@ -8,8 +8,14 @@
                  [com.tinkerpop/pipes "2.6.0"]
                  [com.tinkerpop.gremlin/gremlin-java "2.6.0"]]
   :profiles
-  {:dev {:dependencies [[org.clojure/test.check "0.7.0"]
-                        [criterium "0.4.3"]]}}
+  {:dev
+   {:dependencies [[org.clojure/test.check "0.7.0"]
+                   [criterium "0.4.3"]]}
+   :compiled
+   {:source-paths      ["src/clj"]
+    :java-source-paths ["src/java"]
+    :aot :all
+    :omit-source true}}
   :source-paths      ["src/clj" "dev"]
   :java-source-paths ["src/java"]
   ; lein test-refresh : rerun tests when files change

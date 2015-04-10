@@ -55,8 +55,8 @@ module PacerScale
         self[:value]
       end
 
-      def find(val, tolerance)
-        # calculate offset ...
+      def find(val, tolerance = 0)
+        # calculate offset from current position...
         range(val - value, tolerance).first
       end
 

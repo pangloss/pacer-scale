@@ -14,9 +14,11 @@
     </license>
   </licenses>
   <scm>
-    <tag>c469f8c283440bc352dc5eeced1f3d2d52ceb795
+    <connection>scm:git:git://github.com/xnlogic/pacer-scale.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com/xnlogic/pacer-scale.git</developerConnection>
+    <tag>2dbe9406d2a9b2dfb55e8f7a11166f56451a3837
 </tag>
-    <url/>
+    <url>https://github.com/xnlogic/pacer-scale</url>
   </scm>
   <build>
     <sourceDirectory>src/clj</sourceDirectory>
