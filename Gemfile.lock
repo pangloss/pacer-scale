@@ -69,7 +69,5 @@ DEPENDENCIES
   pacer-scale!
   rake
   rspec
-  rspec-core (>= 2.13.1)
-  rspec-expectations (>= 2.13.0)
   rspec-its
   xn_gem_release_tasks (>= 0.1.21)

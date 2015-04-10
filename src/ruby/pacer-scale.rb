@@ -79,15 +79,15 @@ module PacerScale
       end
 
       def range(offset, tolerance)
-        as_scale.set_range(offset, tolerance)
+        _as_scale.range_traversal(offset, tolerance)
       end
 
       def below(offset = 0)
-        as_scale.set_below(offset)
+        _as_scale.below_traversal(offset)
       end
 
       def above(offset = 0)
-        as_scale.set_above(offset)
+        _as_scale.above_traversal(offset)
       end
 
       def find_range(val, tolerance)
@@ -97,7 +97,7 @@ module PacerScale
 
       protected
 
-      def as_scale
+      def _as_scale
         chain_route(filter: PacerScale::RangeTraversal,
                     min: min, max: max, step: step)
       end
@@ -114,21 +114,21 @@ module PacerScale
   module RangeTraversal
     attr_accessor :min, :max, :step, :offset, :above_tolerance, :below_tolerance
 
-    def set_range(offset, tolerance)
+    def range_traversal(offset, tolerance)
       @offset = offset
       @below_tolerance = tolerance
       @above_tolerance = tolerance
       self
     end
 
-    def set_above(offset)
+    def above_traversal(offset)
       @offset = offset
       @below_tolerance = 0
       @above_tolerance = nil
       self
     end
 
-    def set_below(offset)
+    def below_traversal(offset)
       @offset = offset
       @below_tolerance = nil
       @above_tolerance = 0
@@ -144,11 +144,7 @@ module PacerScale
     # TODO: inspect better
 
     def attach_pipe(end_pipe)
-      #if min and max and step and offset and below_tolerance and above_tolerance
-        pipe = ScaleRangePipe.new(min, max, bigdec(step), bigdec(offset), bigdec(below_tolerance), bigdec(above_tolerance))
-      #else
-      #  pipe = com.tinkerpop.pipes.IdentityPipe.new
-      #end
+      pipe = ScaleRangePipe.new(min, max, bigdec(step), bigdec(offset), bigdec(below_tolerance), bigdec(above_tolerance))
       pipe.set_starts end_pipe if end_pipe
       pipe
     end

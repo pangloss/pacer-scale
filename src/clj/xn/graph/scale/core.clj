@@ -129,12 +129,17 @@
     (defmethod traversal-step (- dist) [^Vertex point n]
       (*traversal-step point Direction/IN label Direction/OUT))))
 
-; FIXME: first If the first point is off the scale but the desired range includes the scale, it should adjust.
 (defn- first-point
   "Get the first point in the desired range. May be null if the desired point is off the scale."
   [scale point]
   (let [current (scale-index scale (value point))
-        target (scale-index scale (min-value scale point))]
+        target (or (scale-index scale (min-value scale point))
+                   ; FIXME: If the first point is off the scale but the desired
+                   ; range includes the scale, it should adjust.  but the
+                   ; tricky part of that is the range also has to take less
+                   ; vertices, which would complicate scale-range
+                   #_(when (scale-index scale (max-value scale point))
+                       0))]
     (when (and current target)
       (reduce traversal-step
               point

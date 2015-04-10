@@ -16,8 +16,6 @@ Gem::Specification.new do |s|
   s.add_dependency 'pacer'
   s.add_development_dependency 'rspec'
   s.add_development_dependency 'rspec-its'
-  s.add_development_dependency 'rspec-core',         '>=2.13.1'
-  s.add_development_dependency 'rspec-expectations', '>=2.13.0'
   s.add_development_dependency 'rake'
   s.add_development_dependency 'builder'
   s.add_development_dependency 'autotest-standalone'
