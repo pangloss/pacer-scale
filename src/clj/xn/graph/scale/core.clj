@@ -29,7 +29,10 @@
 
 (defn scale-vertex [^Graph g scale i]
   (let [v (.addVertex g nil)]
-    (.setProperty ^Vertex v "value" (scale-point scale i))
+    (.setProperty ^Vertex v "scale_value" (str (scale-point scale i)))
+    (.setProperty ^Vertex v "scale_min" (str (:min scale)))
+    (.setProperty ^Vertex v "scale_max" (str (:max scale)))
+    (.setProperty ^Vertex v "scale_step" (str (:step scale)))
     v))
 
 (defn scale-edge [^Graph g ^Vertex from ^Vertex to dist]
@@ -56,7 +59,8 @@
               v0)))))))
 
 (defn value [^Vertex point]
-  (.getProperty point "value"))
+  (if-let [v (.getProperty point "scale_value")]
+    (BigDecimal. v)))
 
 (defn round-down [scale n]
   (- n (mod n (:step scale))))
@@ -115,9 +119,8 @@
 (defmulti ^:private traversal-step (fn [point n] n))
 
 (defn- *traversal-step [^Vertex point edge-dir edge-label vertex-dir]
-  (let [edges (.getEdges point edge-dir edge-label)
-        ^Edge edge (when (seq edges) (first edges))]
-    (.getVertex edge vertex-dir)))
+  (when point
+    (first (.getVertices point edge-dir edge-label))))
 
 (doseq [dist distances]
   (let [label (into-array String [(str "next_" dist)])]
