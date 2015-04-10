@@ -18,7 +18,6 @@ Gem::Specification.new do |s|
   s.add_development_dependency 'rspec-its'
   s.add_development_dependency 'rake'
   s.add_development_dependency 'builder'
-  s.add_development_dependency 'autotest-standalone'
   s.add_development_dependency 'nokogiri'
   s.add_development_dependency 'xn_gem_release_tasks', '>= 0.1.21'
 

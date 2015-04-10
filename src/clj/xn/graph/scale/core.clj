@@ -13,6 +13,11 @@
      (prn '~n '~'=> n#)
      n#))
 
+(defmacro inspect [s n]
+  `(let [n# ~n]
+     (prn ~s '~'=> n#)
+     n#))
+
 (defn- within [scale n]
   (when (and n (<= (:min scale) n (:max scale)))
     n))
@@ -129,6 +134,49 @@
     (defmethod traversal-step (- dist) [^Vertex point n]
       (*traversal-step point Direction/IN label Direction/OUT))))
 
+(defn remove-oversized-steps [scale current orig-steps]
+  (let [scale-end (long (scale-index scale (:max scale)))
+        current (long current)]
+    (loop [result (transient [])
+           current current
+           smaller-step 0
+           smaller-steps 0
+           [step* & steps :as rem-steps] orig-steps]
+      (let [step (if step* (long step*) 0)]
+        (cond
+          (not= 0 smaller-step)
+          (cond
+            (neg? step)
+            (let [cancel (* smaller-step smaller-steps)
+                  needed (+ cancel step)]
+              (recur result current 0 0 (cons needed rem-steps)))
+            (or (nil? step*) (not= step (- smaller-step)))
+            (if (< scale-end current)
+              (recur result (- current smaller-step)
+                     smaller-step
+                     (dec smaller-steps)
+                     (cons smaller-step rem-steps))
+              (recur (reduce (fn [result _]
+                               (conj! result smaller-step))
+                             result
+                             (range smaller-steps))
+                     current 0 0 rem-steps))
+            :else
+            (recur result (+ current step) smaller-step (dec smaller-steps) steps))
+          (nil? step*) (persistent! result)
+          (or (< scale-end (+ current step))
+              (< (+ current step) 0))
+          (recur result (+ current step) (/ step 10) 10 steps)
+          :else
+          (recur (conj! result step*) (+ current step) 0 0 steps))))))
+
+(set-test remove-oversized-steps
+  (is (= [10 10 10 10 10 10 10 10 10 1 1 1 1 1 1 1 1 1]
+         (remove-oversized-steps {:min 0 :max 99 :step 1M} 0 [100 -1])))
+  (is (= [-1 -1 -1 -1 -1 -1 -1 -1 -1 -10 -10 -10 -10 -10 -10 -10 -10 -10 -10]
+         (remove-oversized-steps {:min 0 :max 99 :step 1M} 99 [1 -100]))))
+
+
 (defn- first-point
   "Get the first point in the desired range. May be null if the desired point is off the scale."
   [scale point]
@@ -143,7 +191,10 @@
     (when (and current target)
       (reduce traversal-step
               point
-              (traversal-steps current target)))))
+              (inspect 2 (remove-oversized-steps
+                scale
+                current
+                (inspect 1 (traversal-steps current target))))))))
 
 (defn- next-point [scale max-value]
   (let [label (into-array String ["next_1"])]

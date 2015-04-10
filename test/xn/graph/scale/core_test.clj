@@ -11,7 +11,7 @@
             [clojure.test.check.generators :as gen]
             [clojure.test.check.properties :as prop]))
 
-(defspec
+#_(defspec
   steps-add-up-to-traversal-distance
   100 ;; the number of iterations for test.check to test
   (prop/for-all [from gen/pos-int
@@ -26,7 +26,7 @@
     (= (- to from)
        (apply + steps))))
 
-(defspec
+#_(defspec
   bigger-steps-add-up-to-traversal-distance
   100
   (prop/for-all [from gen/pos-int
@@ -56,7 +56,7 @@
     {}
     distances))
 
-(defspec
+#_(defspec
   generate-various-scales
   100
   (prop/for-all
@@ -95,7 +95,7 @@
 
 
 
-(let [g (TinkerGraph.)
+#_(let [g (TinkerGraph.)
       v0 (generate-scale g -500 500 0.1M)
       label (into-array String ["next_1"])
       actual (loop [actual {} v v0]
@@ -122,18 +122,65 @@
             r (f s)]
         (is (some #{expected} r)))))
 
+  (deftest test-range-end
+    (let [f (scale-range -500 500 0.1M 1000M 0M 0M)]
+      (is (not (empty? (f v0))))
+      (is (= [500M] (map value (f v0))))))
+
   (deftest test-range-pipe
     (let [pipe (ScaleRangePipe. -500 500 0.1M 550M 1M 5M)
           a (java.util.ArrayList.)]
       (.add a v0)
       (.setStarts pipe a)
       (is (= (into [] (map actual) (range 49M 55.01M 0.1M))
-             (into [] (seq pipe))))))
+             (into [] (seq pipe)))))))
 
-  )
+(defspec
+  no-falling-off-the-head
+  100
+  (prop/for-all
+    [[low high] (->> (gen/tuple gen/pos-int gen/pos-int)
+                     (gen/such-that (fn [[l h]] (not= l h)))
+                     (gen/fmap (fn [[l h]] (if (< l h) [l h] [h l]))))]
+    (let [g (TinkerGraph.)
+          v0 (generate-scale g low high 1M)
+          label (into-array String ["next_1"])
+          ^Vertex vn (loop [vn v0 ^Vertex v v0]
+                       (if v
+                         (recur v
+                                (first (.getVertices v Direction/OUT label)))
+                         vn))]
+      (every? (fn [n]
+                (let [f (scale-range low high 1M (- n) 0M 0M)
+                      #_ (inspect n)
+                      data (doall (f vn))
+                      expected (- high n)
+                      #_ (inspect expected)
+                      #_ (inspect (map value data))]
+                  (is (= [expected] (map value data)))))
+              (range 0M (BigDecimal. (str (- high low))))))))
 
 
-(deftest inline-tests
+
+
+#_(defspec
+  no-falling-off-the-end
+  100
+  (prop/for-all
+    [[low high] (->> (gen/tuple gen/int gen/int)
+                     (gen/such-that (fn [[l h]] (not= l h)))
+                     (gen/fmap (fn [[l h]] (if (< l h) [l h] [h l]))))]
+    (let [g (TinkerGraph.)
+          v0 (generate-scale g low high 1M)]
+      (every? (fn [n]
+                (let [f (scale-range low high 1M n 0M 0M)]
+                  (is (= [(+ low n)] (map value (f v0))))))
+              (range 0M (BigDecimal. (str (- high low))))))))
+
+
+
+
+#_(deftest inline-tests
   (test #'tests))
 
 (comment
@@ -145,4 +192,6 @@
   (gen/sample (gen/such-that #(not (zero? %)) gen-decimal) 100)
   (gen/sample (gen/such-that #(apply not= %) (gen/tuple gen/int gen/int)) 1000)
 
+  (quick-bench (remove-oversized-steps {:min 0 :max 100 :step 1M} 0 [100 -1 -1 -1]))
+  (bench (remove-oversized-steps {:min 0 :max 99 :step 1M} 0 [100 -1 -1 -1]))
   (quick-bench (traversal-steps 3608 943)))
