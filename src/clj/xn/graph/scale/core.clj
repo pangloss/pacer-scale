@@ -202,9 +202,8 @@
                 (traversal-steps current target))))))
 
 (defn- next-point [scale max-value]
-  (let [label (into-array String ["next_1"])]
-    (fn [point]
-      (traversal-step point 1))))
+  (fn [point]
+    (traversal-step point 1)))
 
 (defn scale-range
   ([scale offset below above]
