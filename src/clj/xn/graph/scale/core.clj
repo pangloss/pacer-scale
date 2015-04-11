@@ -135,9 +135,7 @@
       (*traversal-step point Direction/IN label Direction/OUT))))
 
 (defn- long-steps [^long n]
-  {:pre [(pos? n)]}
   (loop [steps [] n n within 10 step -1]
-    (inspect [steps n within step])
     (cond (zero? n)
           steps
           (zero? (mod n within))
@@ -154,8 +152,6 @@
            smaller-steps 0
            [step* & steps :as rem-steps] orig-steps]
       (let [step (if step* (long step*) 0)]
-        (inspect [current scale-end result rem-steps])
-        (when (not= 0 smaller-step) (inspect [smaller-step smaller-steps]))
         (cond
           (not= 0 smaller-step)
           (if (or (nil? step*) (not= step (- smaller-step)))
@@ -175,11 +171,11 @@
               (< (+ current step) 0))
           (if (neg? (apply + rem-steps))
             (let [[backtrack steps] (loop [bt [step] prev step [step & steps :as rem-steps] steps]
-                                      (if (and step (>= prev step))
+                                      (if (or (pos? prev) (and step (>= prev step)))
                                         (recur (conj bt step) step steps)
                                         [bt rem-steps]))
                   back-dist (apply + backtrack)]
-              (recur (inspect (reduce conj result (long-steps (- back-dist)))) (+ current back-dist) 0 0 steps))
+              (recur (reduce conj result (long-steps (- back-dist))) (+ current back-dist) 0 0 steps))
             (recur result (+ current step) (/ step 10) 10 steps))
           :else
           (recur (conj result step*) (+ current step) 0 0 steps))))))
@@ -205,10 +201,10 @@
     (when (and current target)
       (reduce traversal-step
               point
-              (inspect 2 (remove-oversized-steps
+              (remove-oversized-steps
                 scale
                 current
-                (inspect 1 (traversal-steps current target))))))))
+                (traversal-steps current target))))))
 
 (defn- next-point [scale max-value]
   (let [label (into-array String ["next_1"])]

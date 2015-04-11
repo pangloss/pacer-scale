@@ -11,7 +11,7 @@
             [clojure.test.check.generators :as gen]
             [clojure.test.check.properties :as prop]))
 
-#_(defspec
+(defspec
   steps-add-up-to-traversal-distance
   100 ;; the number of iterations for test.check to test
   (prop/for-all [from gen/pos-int
@@ -26,7 +26,7 @@
     (= (- to from)
        (apply + steps))))
 
-#_(defspec
+(defspec
   bigger-steps-add-up-to-traversal-distance
   100
   (prop/for-all [from gen/pos-int
@@ -56,7 +56,7 @@
     {}
     distances))
 
-#_(defspec
+(defspec
   generate-various-scales
   100
   (prop/for-all
@@ -95,7 +95,7 @@
 
 
 
-#_(let [g (TinkerGraph.)
+(let [g (TinkerGraph.)
       v0 (generate-scale g -500 500 0.1M)
       label (into-array String ["next_1"])
       actual (loop [actual {} v v0]
@@ -135,9 +135,10 @@
       (is (= (into [] (map actual) (range 49M 55.01M 0.1M))
              (into [] (seq pipe)))))))
 
+
 (defspec
   no-falling-off-the-head
-  100
+  1000
   (prop/for-all
     [[low high] (->> (gen/tuple gen/pos-int gen/pos-int)
                      (gen/such-that (fn [[l h]] (not= l h)))
@@ -152,18 +153,13 @@
                          vn))]
       (every? (fn [n]
                 (let [f (scale-range low high 1M (- n) 0M 0M)
-                      #_ (inspect n)
                       data (doall (f vn))
-                      expected (- high n)
-                      #_ (inspect expected)
-                      #_ (inspect (map value data))]
+                      expected (- high n)]
                   (is (= [expected] (map value data)))))
               (range 0M (BigDecimal. (str (- high low))))))))
 
 
-
-
-#_(defspec
+(defspec
   no-falling-off-the-end
   100
   (prop/for-all
@@ -180,7 +176,7 @@
 
 
 
-#_(deftest inline-tests
+(deftest inline-tests
   (test #'tests))
 
 (comment
