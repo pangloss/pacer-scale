@@ -16,7 +16,7 @@
   <scm>
     <connection>scm:git:git://github.com/xnlogic/pacer-scale.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/xnlogic/pacer-scale.git</developerConnection>
-    <tag>2dbe9406d2a9b2dfb55e8f7a11166f56451a3837
+    <tag>a4e11cf2cbe5352fdc91047c24b402c5e535c7fb
 </tag>
     <url>https://github.com/xnlogic/pacer-scale</url>
   </scm>
