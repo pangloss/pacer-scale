@@ -8,15 +8,15 @@
 (def distances (into [] (take 10) (iterate #(* 10 %) 1)))
 (def max-step (apply max distances))
 
-(defmacro inspect [n]
-  `(let [n# ~n]
-     (prn '~n '~'=> n#)
-     n#))
-
-(defmacro inspect [s n]
-  `(let [n# ~n]
-     (prn ~s '~'=> n#)
-     n#))
+(defmacro inspect
+  ([n]
+   `(let [n# ~n]
+      (prn '~n '~'=> n#)
+      n#))
+  ([s n]
+   `(let [n# ~n]
+      (prn ~s '~'=> n#)
+      n#)))
 
 (defn- within [scale n]
   (when (and n (<= (:min scale) n (:max scale)))
@@ -134,46 +134,60 @@
     (defmethod traversal-step (- dist) [^Vertex point n]
       (*traversal-step point Direction/IN label Direction/OUT))))
 
+(defn- long-steps [^long n]
+  {:pre [(pos? n)]}
+  (loop [steps [] n n within 10 step -1]
+    (inspect [steps n within step])
+    (cond (zero? n)
+          steps
+          (zero? (mod n within))
+          (recur steps n (* 10 within) (* 10 step))
+          :else
+          (recur (conj steps step) (+ n step) within step))))
+
 (defn remove-oversized-steps [scale current orig-steps]
   (let [scale-end (long (scale-index scale (:max scale)))
         current (long current)]
-    (loop [result (transient [])
+    (loop [result []
            current current
            smaller-step 0
            smaller-steps 0
            [step* & steps :as rem-steps] orig-steps]
       (let [step (if step* (long step*) 0)]
+        (inspect [current scale-end result rem-steps])
+        (when (not= 0 smaller-step) (inspect [smaller-step smaller-steps]))
         (cond
           (not= 0 smaller-step)
-          (cond
-            (neg? step)
-            (let [cancel (* smaller-step smaller-steps)
-                  needed (+ cancel step)]
-              (recur result current 0 0 (cons needed rem-steps)))
-            (or (nil? step*) (not= step (- smaller-step)))
+          (if (or (nil? step*) (not= step (- smaller-step)))
             (if (< scale-end current)
               (recur result (- current smaller-step)
                      smaller-step
                      (dec smaller-steps)
                      (cons smaller-step rem-steps))
               (recur (reduce (fn [result _]
-                               (conj! result smaller-step))
+                               (conj result smaller-step))
                              result
                              (range smaller-steps))
                      current 0 0 rem-steps))
-            :else
             (recur result (+ current step) smaller-step (dec smaller-steps) steps))
-          (nil? step*) (persistent! result)
+          (nil? step*) result
           (or (< scale-end (+ current step))
               (< (+ current step) 0))
-          (recur result (+ current step) (/ step 10) 10 steps)
+          (if (neg? (apply + rem-steps))
+            (let [[backtrack steps] (loop [bt [step] prev step [step & steps :as rem-steps] steps]
+                                      (if (and step (>= prev step))
+                                        (recur (conj bt step) step steps)
+                                        [bt rem-steps]))
+                  back-dist (apply + backtrack)]
+              (recur (inspect (reduce conj result (long-steps (- back-dist)))) (+ current back-dist) 0 0 steps))
+            (recur result (+ current step) (/ step 10) 10 steps))
           :else
-          (recur (conj! result step*) (+ current step) 0 0 steps))))))
+          (recur (conj result step*) (+ current step) 0 0 steps))))))
 
 (set-test remove-oversized-steps
   (is (= [10 10 10 10 10 10 10 10 10 1 1 1 1 1 1 1 1 1]
          (remove-oversized-steps {:min 0 :max 99 :step 1M} 0 [100 -1])))
-  (is (= [-1 -1 -1 -1 -1 -1 -1 -1 -1 -10 -10 -10 -10 -10 -10 -10 -10 -10 -10]
+  (is (= [-1 -1 -1 -1 -1 -1 -1 -1 -1 -10 -10 -10 -10 -10 -10 -10 -10 -10]
          (remove-oversized-steps {:min 0 :max 99 :step 1M} 99 [1 -100]))))
 
 
