@@ -146,7 +146,7 @@
 (defn remove-oversized-steps [scale current orig-steps]
   (let [scale-end (long (scale-index scale (:max scale)))
         current (long current)]
-    (loop [result []
+    (loop [result (transient [])
            current current
            smaller-step 0
            smaller-steps 0
@@ -161,12 +161,12 @@
                      (dec smaller-steps)
                      (cons smaller-step rem-steps))
               (recur (reduce (fn [result _]
-                               (conj result smaller-step))
+                               (conj! result smaller-step))
                              result
                              (range smaller-steps))
                      current 0 0 rem-steps))
             (recur result (+ current step) smaller-step (dec smaller-steps) steps))
-          (nil? step*) result
+          (nil? step*) (persistent! result)
           (or (< scale-end (+ current step))
               (< (+ current step) 0))
           (if (neg? (apply + rem-steps))
@@ -175,10 +175,10 @@
                                         (recur (conj bt step) step steps)
                                         [bt rem-steps]))
                   back-dist (apply + backtrack)]
-              (recur (reduce conj result (long-steps (- back-dist))) (+ current back-dist) 0 0 steps))
+              (recur (reduce conj! result (long-steps (- back-dist))) (+ current back-dist) 0 0 steps))
             (recur result (+ current step) (/ step 10) 10 steps))
           :else
-          (recur (conj result step*) (+ current step) 0 0 steps))))))
+          (recur (conj! result step*) (+ current step) 0 0 steps))))))
 
 (set-test remove-oversized-steps
   (is (= [10 10 10 10 10 10 10 10 10 1 1 1 1 1 1 1 1 1]
