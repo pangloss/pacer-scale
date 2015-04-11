@@ -45,7 +45,6 @@ elements with a tolerance around the desired value.
   #<V[2140700]> #<V[2140702]> #<V[2140704]>
   # Total: 9
   #  => #<offset(925.0332000000001, 0.05) -> V>
-  
   root.find_range('my_data_range', 425.0332, 0.05).properties
   # {"scale_max"=>"2500", "scale_min"=>"-500", "scale_value"=>"424.9875", "scale_step"=>"0.0125"}
   # {"scale_max"=>"2500", "scale_min"=>"-500", "scale_value"=>"425.0000", "scale_step"=>"0.0125"}
@@ -84,7 +83,6 @@ based on the id we found in the query above:
   # #<V[2123807]> #<V[2123809]> #<V[2123811]>
   # Total: 3
   #  => #<offset(-100, 0.01) -> V>
-
   value.offset(-100, 0.01).properties
   # {"scale_max"=>"2500", "scale_min"=>"-500", "scale_value"=>"325.0250", "scale_step"=>"0.0125"}
   # {"scale_max"=>"2500", "scale_min"=>"-500", "scale_value"=>"325.0375", "scale_step"=>"0.0125"}
@@ -105,22 +103,19 @@ the offset for each vertex, but you must provide the scale information in the qu
   # #<V[2123763]> #<V[2157570]>
   # Total: 2
   # => #<Obj 2 ids -> lookup -> is_not(nil)>
-
-  Their values:
-
   values.properties
   # {"scale_max"=>"2500", "scale_min"=>"-500", "scale_value"=>"324.7875", "scale_step"=>"0.0125"}
   # {"scale_max"=>"2500", "scale_min"=>"-500", "scale_value"=>"524.9625", "scale_step"=>"0.0125"}
   # Total: 2
   #  => #<Obj 2 ids -> lookup -> is_not(nil) -> Hash-Map>
     
-  # Now we can traverse from these values to find the values at some offset from them:
+  # Now we can traverse from these values to find the values at some offset from them. Note that
+  # we must provide the scale info here with #as_scale:
 
   values.as_scale(-500, 2500, 0.0125).offset(500, 0.0125)
   # #<V[2208206]> #<V[2208208]> #<V[2208210]> #<V[2242013]> #<V[2242015]> #<V[2242017]>
   # Total: 6
   #  => #<Obj 2 ids -> lookup -> is_not(nil) -> offset(500, 0.0125) -> V>
-
   values.as_scale(-500, 2500, 0.0125).offset(500, 0.0125).properties
   # {"scale_max"=>"2500", "scale_min"=>"-500", "scale_value"=>"824.7750", "scale_step"=>"0.0125"}
   # {"scale_max"=>"2500", "scale_min"=>"-500", "scale_value"=>"824.7875", "scale_step"=>"0.0125"}
