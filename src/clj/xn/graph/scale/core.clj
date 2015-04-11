@@ -7,6 +7,15 @@
 
 (def distances (into [] (take 10) (iterate #(* 10 %) 1)))
 (def max-step (apply max distances))
+(defmacro make-labels []
+  `(defn- #^"[Ljava.lang.String;" label [^long n#]
+     (case n#
+       ~@(mapcat (fn [n] [`(~n ~(- n))
+                          `(let [#^"[Ljava.lang.String;" label# (make-array String 1)]
+                             (aset label# 0 ~(str "next_" n))
+                             label#)])
+                 distances))))
+(make-labels)
 
 (defmacro inspect
   ([n]
@@ -122,12 +131,9 @@
 
 (defn- traversal-step [^Vertex point ^long n]
   (when point
-    (let [#^"[Ljava.lang.String;" label (make-array String 1)]
-      (if (pos? n)
-        (do (aset label 0 (str "next_" n))
-            (first (.getVertices point Direction/OUT label)))
-        (do (aset label 0 (str "next_" (- n)))
-            (first (.getVertices point Direction/IN label)))))))
+    (if (pos? n)
+      (first (.getVertices point Direction/OUT (label n)))
+      (first (.getVertices point Direction/IN (label n))))))
 
 (defn- long-steps [^long n]
   (loop [steps (transient []) n n within 10 step -1]
@@ -204,16 +210,19 @@
   ([scale offset below above]
    {:pre [(decimal? offset)
           (decimal? (:step scale))
-          (decimal? below)
-          (decimal? above)]}
-   (let [scale (assoc scale :offset offset :below below :above above)]
+          (when below (decimal? below))
+          (when above (decimal? above))]}
+   (let [scale (map->scale (assoc scale :offset offset
+                                  ; FIXME: below ranges will not work until the problem describe in first-point is fixed
+                                  :below (or below (- (:max scale) (:min scale)))
+                                  :above (or below (- (:max scale) (:min scale)))))]
      (fn [point]
        (->> (first-point scale point)
             (iterate (next-point scale (max-value scale point)))
             (take-while some?)
             (take (inc (Math/round (/ (double (+ above below)) (double (:step scale))))))))))
   ([min max step offset below above]
-   (scale-range {:min min :max max :step step}
+   (scale-range (map->scale {:min min :max max :step step})
                 offset below above)))
 
 

@@ -32,7 +32,7 @@ module PacerScale
         out(label, Value).first.find val
       end
 
-      def range(label, val, tolerance)
+      def find_range(label, val, tolerance)
         out(label, Value).first.find_range val, tolerance
       end
     end
@@ -119,21 +119,21 @@ module PacerScale
       @offset_by = offset_by
       @below_tolerance = t_below
       @above_tolerance = t_above
-      self
+      v(extensions)
     end
 
     def above(offset_by = 0)
       @offset_by = offset_by
       @below_tolerance = 0
       @above_tolerance = nil
-      self
+      v(extensions)
     end
 
     def below(offset_by = 0)
       @offset_by = offset_by
       @below_tolerance = nil
       @above_tolerance = 0
-      self
+      v(extensions)
     end
 
     protected
@@ -142,10 +142,16 @@ module PacerScale
       BigDecimal.new(n.to_s) if n
     end
 
-    # TODO: inspect better
+    def inspect_string
+      if above_tolerance == below_tolerance
+        "offset(#{ offset_by }, #{above_tolerance})"
+      else
+        "offset(#{ offset_by }, #{below_tolerance.inspect}, #{above_tolerance.inspect})"
+      end
+    end
 
     def attach_pipe(end_pipe)
-      pipe = ScaleRangePipe.new(min, max, bigdec(step), bigdec(offset_by), bigdec(below_tolerance), bigdec(above_tolerance))
+      pipe = ScaleRangePipe.new(min, max, bigdec(step), bigdec(offset_by || 0), bigdec(below_tolerance), bigdec(above_tolerance))
       pipe.set_starts end_pipe if end_pipe
       pipe
     end
