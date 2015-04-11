@@ -65,7 +65,7 @@
 
 (defn value [^Vertex point]
   (if-let [v (.getProperty point "scale_value")]
-    (BigDecimal. v)))
+    (BigDecimal. (str v))))
 
 (defn round-down [scale n]
   (- n (mod n (:step scale))))
@@ -120,30 +120,25 @@
         (+ current step)
         (recur (conj! steps step) (+ current step))))))
 
-
-(defmulti ^:private traversal-step (fn [point n] n))
-
-(defn- *traversal-step [^Vertex point edge-dir edge-label vertex-dir]
+(defn- traversal-step [^Vertex point ^long n]
   (when point
-    (first (.getVertices point edge-dir edge-label))))
-
-(doseq [dist distances]
-  (let [label (into-array String [(str "next_" dist)])]
-    (defmethod traversal-step dist [^Vertex point n]
-      (*traversal-step point Direction/OUT label Direction/IN))
-    (defmethod traversal-step (- dist) [^Vertex point n]
-      (*traversal-step point Direction/IN label Direction/OUT))))
+    (let [#^"[Ljava.lang.String;" label (make-array String 1)]
+      (if (pos? n)
+        (do (aset label 0 (str "next_" n))
+            (first (.getVertices point Direction/OUT label)))
+        (do (aset label 0 (str "next_" (- n)))
+            (first (.getVertices point Direction/IN label)))))))
 
 (defn- long-steps [^long n]
-  (loop [steps [] n n within 10 step -1]
+  (loop [steps (transient []) n n within 10 step -1]
     (cond (zero? n)
-          steps
+          (persistent! steps)
           (zero? (mod n within))
           (recur steps n (* 10 within) (* 10 step))
           :else
-          (recur (conj steps step) (+ n step) within step))))
+          (recur (conj! steps step) (- n step) within step))))
 
-(defn remove-oversized-steps [scale current orig-steps]
+(defn- remove-oversized-steps [scale current orig-steps]
   (let [scale-end (long (scale-index scale (:max scale)))
         current (long current)]
     (loop [result (transient [])
@@ -170,22 +165,16 @@
           (or (< scale-end (+ current step))
               (< (+ current step) 0))
           (if (neg? (apply + rem-steps))
-            (let [[backtrack steps] (loop [bt [step] prev step [step & steps :as rem-steps] steps]
-                                      (if (or (pos? prev) (and step (>= prev step)))
-                                        (recur (conj bt step) step steps)
-                                        [bt rem-steps]))
-                  back-dist (apply + backtrack)]
-              (recur (reduce conj! result (long-steps (- back-dist))) (+ current back-dist) 0 0 steps))
-            (recur result (+ current step) (/ step 10) 10 steps))
+            (let [[back-dist backtrack steps]
+                  (loop [back-dist step backtrack (transient [step]) prev step [step* & steps :as rem-steps] steps]
+                    (let [step (if step* (long step*) 0)]
+                      (if (or (pos? prev) (and step* (>= prev step)))
+                        (recur (+ back-dist step) (conj! backtrack step*) step steps)
+                        [back-dist (persistent! backtrack) rem-steps])))]
+              (recur (reduce conj! result (long-steps back-dist)) (+ current (long back-dist)) 0 0 steps))
+            (recur result (+ current step) (long (/ step 10)) 10 steps))
           :else
           (recur (conj! result step*) (+ current step) 0 0 steps))))))
-
-(set-test remove-oversized-steps
-  (is (= [10 10 10 10 10 10 10 10 10 1 1 1 1 1 1 1 1 1]
-         (remove-oversized-steps {:min 0 :max 99 :step 1M} 0 [100 -1])))
-  (is (= [-1 -1 -1 -1 -1 -1 -1 -1 -1 -10 -10 -10 -10 -10 -10 -10 -10 -10]
-         (remove-oversized-steps {:min 0 :max 99 :step 1M} 99 [1 -100]))))
-
 
 (defn- first-point
   "Get the first point in the desired range. May be null if the desired point is off the scale."
@@ -209,7 +198,7 @@
 (defn- next-point [scale max-value]
   (let [label (into-array String ["next_1"])]
     (fn [point]
-      (*traversal-step point Direction/OUT label Direction/IN))))
+      (traversal-step point 1))))
 
 (defn scale-range
   ([scale offset below above]
@@ -330,6 +319,14 @@
     (is (= 1M (round-up {:step 0.002M} 1)))
     (is (= 0M (round-up {:step 0.002M} 0)))))
 
+
+(set-test remove-oversized-steps
+  (is (= [10 10 10 10 10 10 10 10 10 1 1 1 1 1 1 1 1 1]
+         (remove-oversized-steps {:min 0 :max 99 :step 1M} 0 [100 -1])))
+  (is (= [-1 -1 -1 -1 -1 -1 -1 -1 -1 -10 -10 -10 -10 -10 -10 -10 -10 -10]
+         (remove-oversized-steps {:min 0 :max 99 :step 1M} 99 [1 -100]))))
+
+
 (def tests)
 (set-test tests
   (testing "tests defined in scale.core itself"
@@ -340,4 +337,5 @@
     (test #'scale-point)
     (test #'traversal-steps)
     (test #'round-up)
-    (test #'round-down)))
+    (test #'round-down)
+    (test #'remove-oversized-steps)))

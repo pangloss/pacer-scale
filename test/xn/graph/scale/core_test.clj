@@ -100,7 +100,8 @@
       label (into-array String ["next_1"])
       actual (loop [actual {} v v0]
                (if v
-                 (recur (assoc actual (value v) v) (first (.getVertices v Direction/OUT label)))
+                 (recur (assoc actual (value v) v)
+                        (first (.getVertices ^Vertex v Direction/OUT label)))
                  actual))]
   (defspec
     navagate-a-real-scale
