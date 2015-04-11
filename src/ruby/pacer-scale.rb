@@ -75,24 +75,24 @@ module PacerScale
 
       def find(val)
         # calculate offset from current position...
-        range(val - value, 0).first
+        offset(val - value, 0).first
       end
 
-      def range(offset, tolerance)
-        _as_scale.range_traversal(offset, tolerance)
+      def offset(offset_by, tolerance)
+        _as_scale.offset(offset_by, tolerance)
       end
 
-      def below(offset = 0)
-        _as_scale.below_traversal(offset)
+      def below(offset_by = 0)
+        _as_scale.below_traversal(offset_by)
       end
 
-      def above(offset = 0)
-        _as_scale.above_traversal(offset)
+      def above(offset_by = 0)
+        _as_scale.above_traversal(offset_by)
       end
 
       def find_range(val, tolerance)
-        # calculate offset from current position...
-        range(val - value, tolerance)
+        # calculate offset_by from current position...
+        offset(val - value, tolerance)
       end
 
       protected
@@ -112,24 +112,25 @@ module PacerScale
   end
 
   module RangeTraversal
-    attr_accessor :min, :max, :step, :offset, :above_tolerance, :below_tolerance
+    attr_accessor :min, :max, :step, :offset_by, :above_tolerance, :below_tolerance
 
-    def range_traversal(offset, tolerance)
-      @offset = offset
-      @below_tolerance = tolerance
-      @above_tolerance = tolerance
+    def offset(offset_by, t_below, t_above = nil)
+      t_above ||= t_below
+      @offset_by = offset_by
+      @below_tolerance = t_below
+      @above_tolerance = t_above
       self
     end
 
-    def above_traversal(offset)
-      @offset = offset
+    def above(offset_by = 0)
+      @offset_by = offset_by
       @below_tolerance = 0
       @above_tolerance = nil
       self
     end
 
-    def below_traversal(offset)
-      @offset = offset
+    def below(offset_by = 0)
+      @offset_by = offset_by
       @below_tolerance = nil
       @above_tolerance = 0
       self
@@ -144,7 +145,7 @@ module PacerScale
     # TODO: inspect better
 
     def attach_pipe(end_pipe)
-      pipe = ScaleRangePipe.new(min, max, bigdec(step), bigdec(offset), bigdec(below_tolerance), bigdec(above_tolerance))
+      pipe = ScaleRangePipe.new(min, max, bigdec(step), bigdec(offset_by), bigdec(below_tolerance), bigdec(above_tolerance))
       pipe.set_starts end_pipe if end_pipe
       pipe
     end
