@@ -74,3 +74,24 @@ task :clean do
   sh "rm #{target_jar}" if File.exists?( target_jar )
 end
 
+task :update_lein_version do
+  proj = File.read 'project.clj'
+  File.open 'project.clj', 'w' do |f|
+    proj.each_line.map do |line|
+      if line =~ /  com.xnlogic\/mcfly\s+"[^"]+"\s*$/
+        f.puts %{  com.xnlogic/mcfly "#{XNGemReleaseTasks.reload_version}"}
+      else
+        f.puts line
+      end
+    end
+  end
+  `git add project.clj`
+end
+
+Rake::Task['increment_release_version'].enhance do
+  Rake::Task['update_lein_version'].invoke
+end
+
+Rake::Task['set_release_version'].enhance do
+  Rake::Task['update_lein_version'].invoke
+end
