@@ -22,6 +22,9 @@ module PacerScale
   module Root
     module Vertex
       def generate_scale(label, min, max, step)
+        if out_e(label).first
+          fail Pacer::ClientError.new("Scale root may not have multiple scales with the same label. (#{label})")
+        end
         v = PacerScale.generate_scale(graph, min, max, step)
         add_edges_to(label, v)
         v[:root_edge] = label
