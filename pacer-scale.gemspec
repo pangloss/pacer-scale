@@ -12,7 +12,6 @@ Gem::Specification.new do |s|
   s.summary     = %q{Scale plugin for Pacer}
   s.description = "Generate and produce ranges in scale data structures in the graph"
 
-  s.add_dependency "lock_jar", "~> 0.10.2"
   s.add_dependency 'pacer'
   s.add_development_dependency 'rspec'
   s.add_development_dependency 'rspec-its'
