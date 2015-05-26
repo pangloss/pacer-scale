@@ -1,6 +1,7 @@
 (ns xn.graph.scale.core
   (:require [clojure.test :refer [is testing set-test]])
-  (:import (com.tinkerpop.blueprints Graph Direction Edge Element Vertex)
+  (:import (com.tinkerpop.blueprints Graph Direction Edge Element Vertex
+                                     TransactionalGraph)
            java.math.BigDecimal
            java.math.MathContext
            java.util.Iterator))
@@ -68,6 +69,8 @@
                                vs))
                            vs
                            distances)]
+            (when (and (zero? (mod idx 10000)) (instance? TransactionalGraph g))
+              (.commit ^TransactionalGraph g))
             (if (< idx last-idx)
               (recur (inc idx) vs)
               v0)))))))
