@@ -1,9 +1,9 @@
-(defproject com.xnlogic/graph.scale "0.1.5"
+(defproject com.xnlogic/graph.scale "0.1.6"
   :description "Graph Scale or Timeline data structure"
   :url "http://xnlogic.com"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :dependencies [[org.clojure/clojure "1.7.0-alpha6"]
+  :dependencies [[org.clojure/clojure "1.7.0"]
                  [com.tinkerpop.blueprints/blueprints-core "2.6.0"]
                  [com.tinkerpop/pipes "2.6.0"]
                  [com.tinkerpop.gremlin/gremlin-java "2.6.0"]]
