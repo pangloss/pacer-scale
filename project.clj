@@ -1,4 +1,4 @@
-(defproject com.xnlogic/graph.scale "0.1.6"
+(defproject com.xnlogic/graph.scale "0.1.7"
   :description "Graph Scale or Timeline data structure"
   :url "http://xnlogic.com"
   :license {:name "Eclipse Public License"

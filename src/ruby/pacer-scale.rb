@@ -134,18 +134,21 @@ module PacerScale
       @offset_by = bigdec(offset_by || 0)
       @below_tolerance = bigdec(t_below)
       @above_tolerance = bigdec(t_above)
+      v.add_extensions(extensions)
     end
 
     def above(offset_by = 0)
       @offset_by = bigdec(offset_by)
       @below_tolerance = bigdec(0)
       @above_tolerance = nil
+      v.add_extensions(extensions)
     end
 
     def below(offset_by = 0)
       @offset_by = bigdec(offset_by)
       @below_tolerance = nil
       @above_tolerance = bigdec(0)
+      v.add_extensions(extensions)
     end
 
     protected
