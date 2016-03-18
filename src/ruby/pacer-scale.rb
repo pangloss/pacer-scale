@@ -117,26 +117,35 @@ module PacerScale
   module RangeTraversal
     attr_accessor :min, :max, :step, :offset_by, :above_tolerance, :below_tolerance
 
+    def min=(val)
+      @min = val
+    end
+
+    def max=(val)
+      @max = val
+    end
+
+    def step=(val)
+      @step = bigdec(val)
+    end
+
     def offset(offset_by, t_below, t_above = nil)
       t_above ||= t_below
-      @offset_by = offset_by
-      @below_tolerance = t_below
-      @above_tolerance = t_above
-      v(extensions)
+      @offset_by = bigdec(offset_by || 0)
+      @below_tolerance = bigdec(t_below)
+      @above_tolerance = bigdec(t_above)
     end
 
     def above(offset_by = 0)
-      @offset_by = offset_by
-      @below_tolerance = 0
+      @offset_by = bigdec(offset_by)
+      @below_tolerance = bigdec(0)
       @above_tolerance = nil
-      v(extensions)
     end
 
     def below(offset_by = 0)
-      @offset_by = offset_by
+      @offset_by = bigdec(offset_by)
       @below_tolerance = nil
-      @above_tolerance = 0
-      v(extensions)
+      @above_tolerance = bigdec(0)
     end
 
     protected
@@ -154,7 +163,7 @@ module PacerScale
     end
 
     def attach_pipe(end_pipe)
-      pipe = ScaleRangePipe.new(min, max, bigdec(step), bigdec(offset_by || 0), bigdec(below_tolerance), bigdec(above_tolerance))
+      pipe = ScaleRangePipe.new(min, max, step, (offset_by || bigdec(0)), below_tolerance, above_tolerance)
       pipe.set_starts end_pipe if end_pipe
       pipe
     end
