@@ -81,6 +81,14 @@ module PacerScale
         offset(val - value, 0).first
       end
 
+      def offset_and_multiply(offset_by, mult, tol)
+        _as_scale.offset_and_multiply(offset_by, mult, tol)
+      end
+
+      def multiply_and_offset(mult, offset_by, tol)
+        _as_scale.multiply_and_offset(mult, offset_by, tol)
+      end
+
       def offset(offset_by, tolerance)
         _as_scale.offset(offset_by, tolerance)
       end
@@ -115,7 +123,8 @@ module PacerScale
   end
 
   module RangeTraversal
-    attr_accessor :min, :max, :step, :offset_by, :above_tolerance, :below_tolerance
+    attr_accessor :min, :max, :step, :offset_by, :above_tolerance, :below_tolerance,
+      :multiply_before, :multiply_after
 
     def min=(val)
       @min = val
@@ -129,9 +138,31 @@ module PacerScale
       @step = bigdec(val)
     end
 
+    def offset_and_multiply(offset_by, mult, t_below, t_above = nil)
+      t_above ||= t_below
+      @offset_by = bigdec(offset_by || 0)
+      @multiply_before = bigdec(1)
+      @multiply_after = bigdec(mult || 0)
+      @below_tolerance = bigdec(t_below)
+      @above_tolerance = bigdec(t_above)
+      v.add_extensions(extensions)
+    end
+
+    def multiply_and_offset(mult, offset_by, t_below, t_above = nil)
+      t_above ||= t_below
+      @offset_by = bigdec(offset_by || 0)
+      @multiply_before = bigdec(mult || 0)
+      @multiply_after = bigdec(1)
+      @below_tolerance = bigdec(t_below)
+      @above_tolerance = bigdec(t_above)
+      v.add_extensions(extensions)
+    end
+
     def offset(offset_by, t_below, t_above = nil)
       t_above ||= t_below
       @offset_by = bigdec(offset_by || 0)
+      @multiply_before = bigdec(1)
+      @multiply_after = bigdec(1)
       @below_tolerance = bigdec(t_below)
       @above_tolerance = bigdec(t_above)
       v.add_extensions(extensions)
@@ -139,6 +170,8 @@ module PacerScale
 
     def above(offset_by = 0)
       @offset_by = bigdec(offset_by)
+      @multiply_before = bigdec(1)
+      @multiply_after = bigdec(1)
       @below_tolerance = bigdec(0)
       @above_tolerance = nil
       v.add_extensions(extensions)
@@ -146,6 +179,8 @@ module PacerScale
 
     def below(offset_by = 0)
       @offset_by = bigdec(offset_by)
+      @multiply_before = bigdec(1)
+      @multiply_after = bigdec(1)
       @below_tolerance = nil
       @above_tolerance = bigdec(0)
       v.add_extensions(extensions)
@@ -159,14 +194,18 @@ module PacerScale
 
     def inspect_string
       if above_tolerance == below_tolerance
-        "offset(#{ offset_by }, #{above_tolerance})"
+        "offset(#{ multiply_before }, #{ offset_by }, #{multiply_after}, #{above_tolerance})"
       else
-        "offset(#{ offset_by }, #{below_tolerance.inspect}, #{above_tolerance.inspect})"
+        "offset(#{ multiply_before }, #{ offset_by }, #{multiply_after}, #{below_tolerance.inspect}, #{above_tolerance.inspect})"
       end
     end
 
     def attach_pipe(end_pipe)
-      pipe = ScaleRangePipe.new(min, max, step, (offset_by || bigdec(0)), below_tolerance, above_tolerance)
+      pipe = ScaleRangePipe.new(min, max, step,
+                                (multiply_before || bigdec(1)),
+                                (offset_by || bigdec(0)),
+                                (multiply_after || bigdec(1)),
+                                below_tolerance, above_tolerance)
       pipe.set_starts end_pipe if end_pipe
       pipe
     end

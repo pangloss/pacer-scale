@@ -53,7 +53,7 @@
 (defn scale-edge [^Graph g ^Vertex from ^Vertex to dist]
   (.addEdge g nil from to (str "next_" dist)))
 
-(defrecord scale [min max step offset below above])
+(defrecord scale [min max step multiple-before offset multiple-after below above])
 
 (defn generate-scale [g min max step]
   (let [scale {:min min :max max :step step}
@@ -89,14 +89,21 @@
       (+ n (- (:step scale) (mod n (:step scale)))))))
 
 (defn- max-value [scale point]
-  (let [n (+ (value point)
-             (:offset scale)
-             (:above scale))]
+  (let [n (+
+           (*
+            (+
+             (*
+              (:multiple-before scale)
+              (value point))
+             (:offset scale))
+            (:multiple-after scale))
+           (:above scale))]
     (within scale (round-down scale n))))
 
 (defn- min-value [scale point]
-  (let [n (+ (value point)
-             (:offset scale)
+  (let [n (+ (* (+ (* (:multiple-before scale) (value point))
+                   (:offset scale))
+                (:multiple-after scale))
              (- (:below scale)))]
     (within scale (round-up scale n))))
 
@@ -209,12 +216,16 @@
     (traversal-step point 1)))
 
 (defn scale-range
-  ([scale offset below above]
+  ([scale multiple-before offset multiple-after below above]
    {:pre [(decimal? offset)
           (decimal? (:step scale))
+          (when multiple-before (decimal? multiple-before))
+          (when multiple-after (decimal? multiple-after))
           (when below (decimal? below))
           (when above (decimal? above))]}
    (let [scale (map->scale (assoc scale :offset offset
+                                  :multiple-before multiple-before
+                                  :multiple-after multiple-after
                                   ; FIXME: below ranges will not work until the problem describe in first-point is fixed
                                   :below (or below (- (:max scale) (:min scale)))
                                   :above (or below (- (:max scale) (:min scale)))))]
@@ -223,9 +234,9 @@
             (iterate (next-point scale (max-value scale point)))
             (take-while some?)
             (take (inc (Math/round (/ (double (+ above below)) (double (:step scale))))))))))
-  ([min max step offset below above]
+  ([min max step multiple-before offset multiple-after below above]
    (scale-range (map->scale {:min min :max max :step step})
-                offset below above)))
+                multiple-before offset multiple-after below above)))
 
 
 ;   ------------------ TESTS ----------------------------------
@@ -256,8 +267,8 @@
   min-value
   (with-redefs [value identity]
     (let [s {:min 0 :max 8 :step 0.2M
-             :offset 3.5M :below 1M :above 1M}]
-      (is (= 0M (min-value {:min 0 :max 8 :step 0.2M :offset 0M :below 0M :above 0M} 0)))
+             :multiple-before 1M :multiple-after 1M :offset 3.5M :below 1M :above 1M}]
+      (is (= 0M (min-value {:min 0 :max 8 :step 0.2M :multiple-before 1M :multiple-after 1M :offset 0M :below 0M :above 0M} 0)))
       (is (= 3.6M (min-value s 1)))
       (is (= 7.6M (min-value s 5)))
       (is (nil? (min-value (assoc s :below 6M) 2)))
@@ -267,7 +278,7 @@
   max-value
   (with-redefs [value identity]
     (let [s {:min 0 :max 8 :step 0.2M
-             :offset 3.5M :below 1M :above 1M}]
+             :multiple-before 1M :multiple-after 1M :offset 3.5M :below 1M :above 1M}]
       (is (= 5.4M (max-value s 1)))
       (is (nil? (max-value s 5))))))
 

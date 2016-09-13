@@ -20,9 +20,9 @@ public class ScaleRangePipe extends AbstractPipe<Vertex, Vertex> {
     protected ISeq range;
     protected IFn nextRange;
 
-    public ScaleRangePipe(long min, long max, BigDecimal step, BigDecimal offset, BigDecimal belowTolerance, BigDecimal aboveTolerance) {
+    public ScaleRangePipe(long min, long max, BigDecimal step, BigDecimal scaleBefore, BigDecimal offset, BigDecimal scaleAfter, BigDecimal belowTolerance, BigDecimal aboveTolerance) {
         this.range = null;
-        this.nextRange = (IFn)scaleRange.invoke(min, max, step, offset, belowTolerance, aboveTolerance);
+        this.nextRange = (IFn)scaleRange.invoke(min, max, step, scaleBefore, offset, scaleAfter, belowTolerance, aboveTolerance);
     }
 
     protected Vertex processNextStart() {
