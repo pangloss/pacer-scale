@@ -1,4 +1,4 @@
-(defproject com.xnlogic/graph.scale "0.1.8"
+(defproject com.xnlogic/graph.scale "0.1.9"
   :description "Graph Scale or Timeline data structure"
   :url "http://xnlogic.com"
   :license {:name "Eclipse Public License"
@@ -17,6 +17,7 @@
     :aot :all
     :omit-source true}}
   :source-paths      ["src/clj" "dev"]
+  :javac-options ["-target" "1.7" "-source" "1.7" "-Xlint:-options"]
   :java-source-paths ["src/java"]
   ; lein test-refresh : rerun tests when files change
   :global-vars {*warn-on-reflection* true})

@@ -24,9 +24,7 @@ Gem::Specification.new do |s|
 
   s.files         = `git ls-files -- *.rb`.split("\n") + ['Jarfile']
   local_jar_file = "src/ruby/xn_graph_scale.jar"
-  if File.exist? local_jar_file
-    s.files << local_jar_file
-  end
+  s.files << local_jar_file
   s.test_files    = `git ls-files -- {test,spec,features}/*`.split("\n")
   s.require_paths = ["src/ruby"]
 end
